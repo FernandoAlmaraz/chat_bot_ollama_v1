@@ -5,6 +5,7 @@ import json
 
 from config import Config
 from tools.rekaliber_tools import obtener_info_rekaliber, obtener_info_kristof
+from tools.database_tools import buscar_propiedades, contar_propiedades
 from prompts.system_prompts import generar_system_prompt
 from utils.helpers import ejecutar_tool, detectar_tool_en_respuesta
 
@@ -13,7 +14,12 @@ app = Flask(__name__)
 app.config.from_object(Config)
 
 # ===== CONFIGURAR TOOLS =====
-tools = [obtener_info_rekaliber, obtener_info_kristof]
+tools = [
+    obtener_info_rekaliber,
+    obtener_info_kristof,
+    buscar_propiedades,
+    contar_propiedades,
+]
 
 # ===== CONFIGURAR MODELO =====
 print(f"🤖 Inicializando modelo: {Config.MODEL_NAME}")
@@ -72,12 +78,12 @@ def chat():
                 # Segunda llamada con el resultado de la tool
                 context_prompt = f"""Has usado la herramienta '{tool_name}' y obtuviste este resultado:
 
-{json.dumps(tool_result, ensure_ascii=False, indent=2)}
+                {json.dumps(tool_result, ensure_ascii=False, indent=2)}
 
-Pregunta original del usuario: "{user_message}"
+                Pregunta original del usuario: "{user_message}"
 
-Ahora responde al usuario de forma natural, clara y amigable usando esta información. 
-Incluye emojis si es apropiado. NO menciones que usaste una herramienta."""
+                Ahora responde al usuario de forma natural, clara y amigable usando esta información. 
+                Incluye emojis si es apropiado. NO menciones que usaste una herramienta."""
 
                 final_response = chain.invoke({"input": context_prompt})
 
