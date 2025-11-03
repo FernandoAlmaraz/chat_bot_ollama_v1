@@ -1,0 +1,288 @@
+<div class="chat-widget">
+  <!-- Botón de burbuja flotante -->
+  <button class="chat-bubble" id="chatBubble">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </svg>
+  </button>
+
+  <!-- Ventana de chat (oculta por defecto) -->
+  <div class="chat-window" id="chatWindow">
+    <div class="chat-header">
+      <h3>Chat de Soporte</h3>
+      <button class="close-btn" id="closeChat">&times;</button>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+      <div class="message bot-message">
+        <p>¡Hola! ¿En qué puedo ayudarte?</p>
+      </div>
+    </div>
+
+    <div class="chat-input">
+      <input type="text" placeholder="Escribe un mensaje..." id="messageInput" />
+      <button class="send-btn" id="sendBtn">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .chat-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+  }
+
+  /* Burbuja flotante */
+  .chat-bubble {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    color: white;
+  }
+
+  .chat-bubble:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Ventana de chat */
+  .chat-window {
+    display: none;
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    width: 350px;
+    height: 500px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+  }
+
+  .chat-window.active {
+    display: flex;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Header del chat */
+  .chat-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .chat-header h3 {
+    margin: 0;
+    font-size: 18px;
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+    line-height: 1;
+    transition: transform 0.2s;
+  }
+
+  .close-btn:hover {
+    transform: rotate(90deg);
+  }
+
+  /* Área de mensajes */
+  .chat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f5f5f5;
+  }
+
+  .message {
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    border-radius: 18px;
+    max-width: 80%;
+    word-wrap: break-word;
+  }
+
+  .bot-message {
+    background: white;
+    color: #333;
+    align-self: flex-start;
+  }
+
+  .user-message {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    align-self: flex-end;
+    margin-left: auto;
+  }
+
+  .message p {
+    margin: 0;
+  }
+
+  /* Indicador de escritura */
+  .typing-indicator {
+    opacity: 0.7;
+    font-style: italic;
+  }
+
+  /* Mensaje de error */
+  .error-message {
+    background: #ffe6e6;
+    color: #d32f2f;
+    border-left: 3px solid #d32f2f;
+  }
+
+  /* Input de chat */
+  .chat-input {
+    display: flex;
+    padding: 15px;
+    background: white;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .chat-input input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    outline: none;
+    font-size: 14px;
+  }
+
+  .send-btn {
+    margin-left: 10px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: opacity 0.3s;
+  }
+
+  .send-btn:hover {
+    opacity: 0.9;
+  }
+</style>
+
+<script>
+  const chatBubble = document.getElementById('chatBubble');
+  const chatWindow = document.getElementById('chatWindow');
+  const closeChat = document.getElementById('closeChat');
+  const sendBtn = document.getElementById('sendBtn');
+  const messageInput = document.getElementById('messageInput') as HTMLInputElement;
+  const chatMessages = document.getElementById('chatMessages');
+
+  // Abrir/cerrar chat con TOGGLE
+  chatBubble?.addEventListener('click', () => {
+    chatWindow?.classList.toggle('active');
+  });
+
+  closeChat?.addEventListener('click', () => {
+    chatWindow?.classList.remove('active');
+  });
+
+  // Enviar mensaje
+  async function sendMessage() {
+    const message = messageInput?.value.trim();
+    console.log(message)
+    if (!message) return;
+
+    // Crear mensaje del usuario
+    const userMsg = document.createElement('div');
+    userMsg.className = 'message user-message';
+    userMsg.innerHTML = `<p>${message}</p>`;
+    chatMessages?.appendChild(userMsg);
+
+    // Limpiar input
+    if (messageInput) messageInput.value = '';
+
+    // Scroll al final
+    if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    // Mostrar indicador de escritura
+    const typingIndicator = document.createElement('div');
+    typingIndicator.className = 'message bot-message typing-indicator';
+    typingIndicator.innerHTML = `<p>Escribiendo...</p>`;
+    chatMessages?.appendChild(typingIndicator);
+    if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    try {
+      // Llamar al backend
+      const response = await fetch('http://localhost:5000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: message })
+      });
+
+      // Remover indicador de escritura
+      typingIndicator.remove();
+
+      if (!response.ok) {
+        throw new Error('Error en la respuesta del servidor');
+      }
+
+      const data = await response.json();
+
+      // Crear respuesta del bot
+      const botMsg = document.createElement('div');
+      botMsg.className = 'message bot-message';
+      botMsg.innerHTML = `<p>${data.response}</p>`;
+      chatMessages?.appendChild(botMsg);
+      if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    } catch (error) {
+      // Remover indicador de escritura en caso de error
+      typingIndicator.remove();
+
+      // Mostrar mensaje de error
+      const errorMsg = document.createElement('div');
+      errorMsg.className = 'message bot-message error-message';
+      errorMsg.innerHTML = `<p>Lo siento, ocurrió un error al procesar tu mensaje. Por favor intenta nuevamente.</p>`;
+      chatMessages?.appendChild(errorMsg);
+      if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      console.error('Error al enviar mensaje:', error);
+    }
+  }
+
+  sendBtn?.addEventListener('click', sendMessage);
+
+  messageInput?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      sendMessage();
+    }
+  });
+</script>
