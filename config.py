@@ -9,7 +9,7 @@ class Config:
 
     # Modelo
     MODEL_NAME = os.getenv("MODEL_NAME", "llama3.2:latest")
-    MODEL_TEMPERATURE = float(os.getenv("MODEL_TEMPERATURE", "0.7"))
+    MODEL_TEMPERATURE = float(os.getenv("MODEL_TEMPERATURE", "0.5"))
 
     # Flask
     FLASK_HOST = os.getenv("FLASK_HOST", "0.0.0.0")

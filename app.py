@@ -5,6 +5,7 @@ from langchain_core.prompts import ChatPromptTemplate
 import json
 
 from config import Config
+import traceback
 from tools.rekaliber_tools import obtener_info_rekaliber, obtener_info_kristof
 from tools.database_tools import buscar_propiedades, contar_propiedades
 from prompts.system_prompts import generar_system_prompt
@@ -62,21 +63,40 @@ def chat():
 
     try:
         # Primera llamada al modelo
+        print(f"[REQUEST] user_message={user_message}")
         response = chain.invoke({"input": user_message})
-        response_text = response.content
+        response_text = getattr(response, "content", None)
+
+        if response_text is None:
+            raise RuntimeError("Respuesta del modelo vacía o inválida")
 
         if Config.FLASK_DEBUG:
             print(f"[DEBUG] Respuesta inicial: {response_text}")
 
-        # Detectar si el modelo quiere usar una tool
-        tool_name = detectar_tool_en_respuesta(response_text)
+        # Detectar si el modelo quiere usar una tool (puede venir con params)
+        tool_spec = detectar_tool_en_respuesta(response_text)
 
-        if tool_name:
+        if tool_spec:
+            tool_name = (
+                tool_spec.get("name") if isinstance(tool_spec, dict) else str(tool_spec)
+            )
             if Config.FLASK_DEBUG:
-                print(f"[DEBUG] Tool detectada: {tool_name}")
+                print(
+                    f"[DEBUG] Tool detectada: {tool_name} params={tool_spec.get('params') if isinstance(tool_spec, dict) else {}}"
+                )
 
-            # Ejecutar la tool
-            tool_result = ejecutar_tool(tool_name, tools)
+            # Ejecutar la tool (ejecutar_tool acepta ahora spec o nombre simple)
+            tool_result = ejecutar_tool(tool_spec, tools)
+
+            # Verificar resultado de la tool
+            if isinstance(tool_result, dict) and tool_result.get("error"):
+                # La tool devolvió un error internamente
+                err = tool_result.get("error")
+                print(f"[ERROR] tool '{tool_name}' returned error: {err}")
+                return (
+                    jsonify({"error": f"Tool '{tool_name}' error: {err}"}),
+                    500,
+                )
 
             if tool_result:
                 # Segunda llamada con el resultado de la tool
@@ -91,9 +111,13 @@ def chat():
 
                 final_response = chain.invoke({"input": context_prompt})
 
+                final_text = getattr(final_response, "content", None)
+                if final_text is None:
+                    raise RuntimeError("Respuesta final del modelo vacía o inválida")
+
                 return jsonify(
                     {
-                        "response": final_response.content,
+                        "response": final_text,
                         "tool_used": tool_name,
                         "tool_result": tool_result if Config.FLASK_DEBUG else None,
                     }
@@ -105,8 +129,12 @@ def chat():
         return jsonify({"response": response_text, "tool_used": None})
 
     except Exception as e:
+        tb = traceback.format_exc()
         print(f"[ERROR] {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        print(tb)
+        if Config.FLASK_DEBUG:
+            return jsonify({"error": str(e), "trace": tb}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @app.route("/tools", methods=["GET"])
@@ -121,6 +149,19 @@ def listar_tools():
             }
         )
     return jsonify({"tools": tools_info})
+
+
+@app.route("/debug/db", methods=["GET"])
+def debug_db():
+    """Endpoint de ayuda para testear la conexión a la base de datos y buscar propiedades."""
+    ciudad = request.args.get("ciudad")
+    try:
+        resultados = buscar_propiedades(ciudad=ciudad)
+        return jsonify({"ok": True, "result": resultados})
+    except Exception as e:
+        tb = traceback.format_exc()
+        print(tb)
+        return jsonify({"ok": False, "error": str(e), "trace": tb}), 500
 
 
 @app.route("/health", methods=["GET"])
