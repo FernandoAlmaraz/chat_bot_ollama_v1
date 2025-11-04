@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 import json
@@ -12,6 +13,9 @@ from utils.helpers import ejecutar_tool, detectar_tool_en_respuesta
 # ===== INICIALIZAR APP =====
 app = Flask(__name__)
 app.config.from_object(Config)
+
+# ===== CONFIGURAR CORS =====
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # ===== CONFIGURAR TOOLS =====
 tools = [

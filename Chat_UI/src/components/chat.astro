@@ -1,7 +1,7 @@
 <div class="chat-widget">
   <!-- Botón de burbuja flotante -->
   <button class="chat-bubble" id="chatBubble">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
     </svg>
   </button>
@@ -26,7 +26,7 @@
   </div>
 </div>
 
-<style>
+<style is:global>
   .chat-widget {
     position: fixed;
     bottom: 20px;
@@ -51,8 +51,8 @@
   }
 
   .chat-bubble:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    transform: scale(1.05);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
   }
 
   /* Ventana de chat */
@@ -68,7 +68,7 @@
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
     flex-direction: column;
     overflow: hidden;
-    animation: slideUp 0.3s ease;
+    animation: slideUp 0.28s ease;
   }
 
   .chat-window.active {
@@ -76,132 +76,189 @@
   }
 
   @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
   /* Header del chat */
   .chat-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 20px;
+    padding: 16px 18px;
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
 
-  .chat-header h3 {
-    margin: 0;
-    font-size: 18px;
-  }
+  .chat-header h3 { margin: 0; font-size: 16px; }
 
   .close-btn {
     background: none;
     border: none;
     color: white;
-    font-size: 28px;
+    font-size: 24px;
     cursor: pointer;
     line-height: 1;
     transition: transform 0.2s;
   }
 
-  .close-btn:hover {
-    transform: rotate(90deg);
-  }
+  .close-btn:hover { transform: rotate(90deg); }
 
   /* Área de mensajes */
   .chat-messages {
     flex: 1;
-    padding: 20px;
+    padding: 18px;
     overflow-y: auto;
-    background: #f5f5f5;
+    background: #f2f2f7;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 
   .message {
-    margin-bottom: 15px;
-    padding: 10px 15px;
+    padding: 10px 14px;
     border-radius: 18px;
-    max-width: 80%;
+    max-width: 78%;
     word-wrap: break-word;
+    animation: slideIn 0.22s ease;
+    position: relative;
+    display: inline-block;
+    font-size: 14px;
+    line-height: 1.4;
   }
 
-  .bot-message {
-    background: white;
-    color: #333;
+  @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* BOT (izquierda) estilo iMessage */
+  .message.bot-message {
+    background: #e5e5ea;
+    color: #000;
     align-self: flex-start;
+    margin-right: auto;
+    border-radius: 18px 18px 18px 6px; /* menos redondo en esquina inferior izquierda */
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02);
   }
 
-  .user-message {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+  /* Cola del bot (izquierda) */
+  .message.bot-message::after {
+    content: '';
+    position: absolute;
+    left: -6px;
+    bottom: 6px;
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-right: 8px solid #e5e5ea;
+    border-bottom: 8px solid transparent;
+    filter: drop-shadow(0 1px 0 rgba(0,0,0,0.02));
+  }
+
+  /* USUARIO (derecha) estilo iMessage */
+  .message.user-message {
+    background: linear-gradient(180deg,#0b93f6 0%, #007aff 100%);
+    color: #fff;
     align-self: flex-end;
     margin-left: auto;
+    border-radius: 18px 18px 6px 18px; /* menos redondo en corner inferior derecha */
+    box-shadow: 0 6px 18px rgba(3, 102, 214, 0.12);
   }
 
-  .message p {
-    margin: 0;
+  /* Cola del usuario (derecha) */
+  .message.user-message::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    bottom: 6px;
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-left: 8px solid #007aff;
+    border-bottom: 8px solid transparent;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.06));
   }
 
-  /* Indicador de escritura */
-  .typing-indicator {
-    opacity: 0.7;
-    font-style: italic;
-  }
+  .message p { margin: 0; }
 
-  /* Mensaje de error */
-  .error-message {
-    background: #ffe6e6;
-    color: #d32f2f;
-    border-left: 3px solid #d32f2f;
-  }
+  /* Estilos para listas dentro de burbujas */
+  .message-list { padding-left: 18px; margin: 6px 0; }
+  .message-list li { margin: 4px 0; }
+
+  .typing-indicator { opacity: 0.85; font-style: italic; }
+
+  .error-message { background: #ffe6e6 !important; color: #d32f2f !important; border: 1px solid #d32f2f; }
 
   /* Input de chat */
-  .chat-input {
-    display: flex;
-    padding: 15px;
-    background: white;
-    border-top: 1px solid #e0e0e0;
-  }
+  .chat-input { display: flex; padding: 12px; background: white; border-top: 1px solid #e6e6e6; }
 
   .chat-input input {
-    flex: 1;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 20px;
-    outline: none;
-    font-size: 14px;
+    flex: 1; padding: 10px 12px; border: 1px solid #e6e6e6; border-radius: 20px; outline: none; font-size: 14px;
   }
 
-  .send-btn {
-    margin-left: 10px;
-    padding: 10px 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: opacity 0.3s;
-  }
+  .send-btn { margin-left: 10px; padding: 10px 18px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: 600; }
 
-  .send-btn:hover {
-    opacity: 0.9;
+  .send-btn:hover { opacity: 0.95; }
+
+  /* Responsividad */
+  @media (max-width: 420px) {
+    .chat-window { right: 12px; width: calc(100% - 24px); height: 70vh; bottom: 80px; }
+    .message { max-width: 84%; }
   }
 </style>
 
 <script>
+  // @ts-nocheck
   const chatBubble = document.getElementById('chatBubble');
   const chatWindow = document.getElementById('chatWindow');
   const closeChat = document.getElementById('closeChat');
   const sendBtn = document.getElementById('sendBtn');
-  const messageInput = document.getElementById('messageInput') as HTMLInputElement;
+  const messageInput = document.getElementById('messageInput');
   const chatMessages = document.getElementById('chatMessages');
+
+  // Renderiza contenido de mensaje de forma segura y con formato ligero
+  /**
+   * Renderiza contenido de mensaje de forma segura y con formato ligero.
+   * Convierte líneas que empiezan con `* ` o `- ` en listas.
+   * @type {(text: string) => DocumentFragment}
+   */
+  const renderMessageContent = function (text) {
+    text = String(text ?? '');
+    const frag = document.createDocumentFragment();
+    if (!text && text !== '') return frag;
+    const lines = text.split(/\r?\n/);
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
+      // Lista si la línea empieza con '* ' o '- '
+      if (/^\s*([*\-])\s+/.test(line)) {
+        const ul = document.createElement('ul');
+        ul.className = 'message-list';
+        while (i < lines.length && /^\s*([*\-])\s+/.test(lines[i])) {
+          const li = document.createElement('li');
+          li.textContent = lines[i].replace(/^\s*([*\-])\s+/, '');
+          ul.appendChild(li);
+          i++;
+        }
+        frag.appendChild(ul);
+        continue;
+      }
+
+      // Línea vacía -> pequeño espacio
+      if (line.trim() === '') {
+        const spacer = document.createElement('div');
+        spacer.style.height = '6px';
+        frag.appendChild(spacer);
+        i++;
+        continue;
+      }
+
+      // Párrafo normal
+      const p = document.createElement('p');
+      p.textContent = line;
+      frag.appendChild(p);
+      i++;
+    }
+    return frag;
+  }
 
   // Abrir/cerrar chat con TOGGLE
   chatBubble?.addEventListener('click', () => {
@@ -214,27 +271,27 @@
 
   // Enviar mensaje
   async function sendMessage() {
-    const message = messageInput?.value.trim();
+    const message = (messageInput instanceof HTMLInputElement) ? messageInput.value.trim() : '';
     console.log(message)
     if (!message) return;
 
-    // Crear mensaje del usuario
-    const userMsg = document.createElement('div');
-    userMsg.className = 'message user-message';
-    userMsg.innerHTML = `<p>${message}</p>`;
-    chatMessages?.appendChild(userMsg);
+  // Crear mensaje del usuario (seguro)
+  const userMsg = document.createElement('div');
+  userMsg.className = 'message user-message';
+  userMsg.appendChild(renderMessageContent(message));
+  chatMessages?.appendChild(userMsg);
 
-    // Limpiar input
-    if (messageInput) messageInput.value = '';
+  // Limpiar input
+  if (messageInput instanceof HTMLInputElement) messageInput.value = '';
 
     // Scroll al final
     if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
 
     // Mostrar indicador de escritura
-    const typingIndicator = document.createElement('div');
-    typingIndicator.className = 'message bot-message typing-indicator';
-    typingIndicator.innerHTML = `<p>Escribiendo...</p>`;
-    chatMessages?.appendChild(typingIndicator);
+  const typingIndicator = document.createElement('div');
+  typingIndicator.className = 'message bot-message typing-indicator';
+  typingIndicator.appendChild(renderMessageContent('Escribiendo...'));
+  chatMessages?.appendChild(typingIndicator);
     if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
 
     try {
@@ -257,10 +314,10 @@
       const data = await response.json();
 
       // Crear respuesta del bot
-      const botMsg = document.createElement('div');
-      botMsg.className = 'message bot-message';
-      botMsg.innerHTML = `<p>${data.response}</p>`;
-      chatMessages?.appendChild(botMsg);
+  const botMsg = document.createElement('div');
+  botMsg.className = 'message bot-message';
+  botMsg.appendChild(renderMessageContent(data.response));
+  chatMessages?.appendChild(botMsg);
       if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
 
     } catch (error) {
@@ -268,10 +325,10 @@
       typingIndicator.remove();
 
       // Mostrar mensaje de error
-      const errorMsg = document.createElement('div');
-      errorMsg.className = 'message bot-message error-message';
-      errorMsg.innerHTML = `<p>Lo siento, ocurrió un error al procesar tu mensaje. Por favor intenta nuevamente.</p>`;
-      chatMessages?.appendChild(errorMsg);
+  const errorMsg = document.createElement('div');
+  errorMsg.className = 'message bot-message error-message';
+  errorMsg.appendChild(renderMessageContent('Lo siento, ocurrió un error al procesar tu mensaje. Por favor intenta nuevamente.'));
+  chatMessages?.appendChild(errorMsg);
       if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
 
       console.error('Error al enviar mensaje:', error);
@@ -280,9 +337,11 @@
 
   sendBtn?.addEventListener('click', sendMessage);
 
-  messageInput?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      sendMessage();
-    }
-  });
+  if (messageInput instanceof HTMLInputElement) {
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+  }
 </script>
