@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-DB_PATH = "data/propiedades.db"
+DB_PATH = "../data/propiedades.db"
 
 
 def inicializar_db():
@@ -13,7 +13,7 @@ def inicializar_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    # Crear tabla
+    # Crear tabla de propiedades
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS propiedades (
@@ -29,6 +29,54 @@ def inicializar_db():
             disponible INTEGER DEFAULT 1
         )
     """
+    )
+
+    # Crear tabla de usuarios
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT,
+            email TEXT UNIQUE,
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """
+    )
+
+    # Crear tabla de conversaciones
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS conversaciones (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario_id INTEGER NOT NULL,
+            titulo TEXT,
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+        )
+    """
+    )
+
+    # Crear tabla de mensajes
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS mensajes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            conversacion_id INTEGER NOT NULL,
+            rol TEXT NOT NULL CHECK(rol IN ('usuario', 'asistente', 'sistema')),
+            contenido TEXT NOT NULL,
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (conversacion_id) REFERENCES conversaciones(id) ON DELETE CASCADE
+        )
+    """
+    )
+
+    # Crear índices para mejorar el rendimiento
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_conversaciones_usuario ON conversaciones(usuario_id)"
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_mensajes_conversacion ON mensajes(conversacion_id)"
     )
 
     # Verificar si ya hay datos
@@ -117,7 +165,22 @@ def inicializar_db():
             f"✅ Base de datos creada con {len(propiedades_ejemplo)} propiedades de ejemplo"
         )
     else:
-        print("✅ Base de datos ya existe")
+        print("✅ Tabla de propiedades ya contiene datos")
+
+    # Verificar y crear usuario por defecto si no existe
+    cursor.execute("SELECT COUNT(*) FROM usuarios")
+    if cursor.fetchone()[0] == 0:
+        cursor.execute(
+            "INSERT INTO usuarios (nombre, email) VALUES (?, ?)",
+            ("Usuario Demo", "demo@example.com"),
+        )
+        print("✅ Usuario demo creado")
+
+    print("✅ Base de datos inicializada correctamente")
+    print("   - Tabla: propiedades")
+    print("   - Tabla: usuarios")
+    print("   - Tabla: conversaciones")
+    print("   - Tabla: mensajes")
 
     conn.commit()
     conn.close()

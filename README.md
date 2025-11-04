@@ -7,8 +7,11 @@ Bot conversacional inteligente con soporte para herramientas (tools) usando Olla
 - ✅ Integración con Ollama (llama3.2)
 - ✅ Sistema de tools personalizable
 - ✅ Información sobre Rekaliber y su fundador
+- ✅ Búsqueda de propiedades en base de datos SQLite
+- ✅ Historial de conversaciones persistente
 - ✅ Respuestas contextuales y amigables
 - ✅ Arquitectura modular y escalable
+- ✅ Interfaz web con ASTRO
 
 ## 📋 Requisitos
 
@@ -154,4 +157,5 @@ FLASK_PORT=8000
 
 ## 📄 Licencia
 
-MIT License - Rekaliber 2024
+MIT License - Rekaliber 2025 
+BY : FERCHEX 3:)

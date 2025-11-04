@@ -10,6 +10,13 @@ from tools.rekaliber_tools import obtener_info_rekaliber, obtener_info_kristof
 from tools.database_tools import buscar_propiedades, contar_propiedades
 from prompts.system_prompts import generar_system_prompt
 from utils.helpers import ejecutar_tool, detectar_tool_en_respuesta
+from utils.database_helpers import (
+    obtener_o_crear_usuario,
+    crear_conversacion,
+    guardar_mensaje,
+    obtener_mensajes_conversacion,
+    listar_conversaciones_usuario,
+)
 
 # ===== INICIALIZAR APP =====
 app = Flask(__name__)
@@ -49,7 +56,9 @@ def chat():
 
     Body JSON:
     {
-        "message": "Tu pregunta aquí"
+        "message": "Tu pregunta aquí",
+        "conversacion_id": 123,  // Opcional: ID de conversación existente
+        "usuario_id": 1  // Opcional: ID del usuario (por defecto usa usuario demo)
     }
 
     El modelo automáticamente decidirá si usar tools o no.
@@ -60,6 +69,22 @@ def chat():
         return jsonify({"error": 'El campo "message" es requerido'}), 400
 
     user_message = data["message"]
+    conversacion_id = data.get("conversacion_id")
+    usuario_id = data.get("usuario_id")
+
+    # Obtener o crear usuario
+    if not usuario_id:
+        usuario_id = obtener_o_crear_usuario()
+
+    # Crear conversación si no existe
+    if not conversacion_id:
+        conversacion_id = crear_conversacion(usuario_id, titulo=user_message[:50])
+
+    # Guardar mensaje del usuario
+    try:
+        guardar_mensaje(conversacion_id, "usuario", user_message)
+    except Exception as e:
+        print(f"[WARNING] Error al guardar mensaje del usuario: {e}")
 
     try:
         # Primera llamada al modelo
@@ -115,9 +140,16 @@ def chat():
                 if final_text is None:
                     raise RuntimeError("Respuesta final del modelo vacía o inválida")
 
+                # Guardar respuesta del asistente
+                try:
+                    guardar_mensaje(conversacion_id, "asistente", final_text)
+                except Exception as e:
+                    print(f"[WARNING] Error al guardar mensaje del asistente: {e}")
+
                 return jsonify(
                     {
                         "response": final_text,
+                        "conversacion_id": conversacion_id,
                         "tool_used": tool_name,
                         "tool_result": tool_result if Config.FLASK_DEBUG else None,
                     }
@@ -126,7 +158,17 @@ def chat():
                 return jsonify({"error": f"Tool '{tool_name}' no encontrada"}), 500
 
         # Si no necesitó tools, devolver la respuesta directa
-        return jsonify({"response": response_text, "tool_used": None})
+        # Guardar respuesta del asistente
+        try:
+            guardar_mensaje(conversacion_id, "asistente", response_text)
+        except Exception as e:
+            print(f"[WARNING] Error al guardar mensaje del asistente: {e}")
+
+        return jsonify({
+            "response": response_text,
+            "conversacion_id": conversacion_id,
+            "tool_used": None
+        })
 
     except Exception as e:
         tb = traceback.format_exc()
