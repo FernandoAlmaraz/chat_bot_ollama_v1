@@ -85,6 +85,27 @@ Verificar estado del servicio
 ```bash
 curl http://localhost:5000/health
 ```
+🖥️ Frontend – Proyecto Astro (Chat_UI)
+
+El frontend vive en la carpeta Chat_UI. Es un proyecto Astro con componentes React.
+
+✅ Instalación
+cd Chat_UI
+npm install
+
+✅ Modo desarrollo
+npm run dev
+
+
+El servidor de Astro se abrirá normalmente en:
+
+http://localhost:4321
+
+✅ Comunicación con tu API
+
+Crea un archivo .env dentro de Chat_UI:
+
+PUBLIC_API_URL="http://localhost:5000/chat"
 
 ## 🔧 Estructura del Proyecto
 ```
@@ -158,4 +179,4 @@ FLASK_PORT=8000
 ## 📄 Licencia
 
 MIT License - Rekaliber 2025 
-BY : FERCHEX 3:)
+BY : FERCHEX 👹
